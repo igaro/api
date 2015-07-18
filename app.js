@@ -1,81 +1,115 @@
 #!/usr/bin/node
 
+"use strict";
+
+// core requires
 var express         = require('express');
 var session         = require("express-session");
 var memcached       = require("connect-memcached");
-var bodyParser      = require('body-parser');
-var cookie_parser   = require("cookie-parser");
+var cookieParser    = require("cookie-parser");
 var passport        = require("passport");
 var passport_local  = require("passport-local");
 
-var app = express.Router();
+// app variables
+var app             = express();
 
-var app = express();
-var config = app.config = require('./etc/config.json');
+// app requires
+var config          = require("./lib/config.js");
+var Router          = require("./lib/Router.js");
+var users           = require("./lib/users.js");
 
-var Router = require("./lib/Router.js");
-var Users = require("./lib/Users.js");
+// use cookies
+app.use(cookieParser());
 
-app.use(bodyParser.urlencoded({ extended: true }));
-app.use(bodyParser.json());
-
-app.use(cookie_parser());
-
+// memcache for sessions
+var sessionCfg = config.get('session');
 app.use(session({
-    secret: 'F$S3EF%fofg',
+    secret: sessionCfg.secret,
     store: new memcached(session)({
-        client: config.memcached,
+        client: config.get('memcached'),
         prefix: "session."
     }),
-    cookie: { maxAge: config.session.timeout },
+    cookie: { maxAge: sessionCfg.timeout },
     rolling: true,
-    resave : false, 
+    resave : false,
     saveUninitialized: true
 }));
 
-// auth is via json web token
+// auth: json web token mechanism
 passport.use(new passport_local.Strategy(
     { passReqToCallback: true },
     function(req, username, password, done) {
-        Users.getByUID(username).then(
+        users.getByUID(username).then(
             function(user) { done(null, user.validate(password)? user : false); },
-            function(err) { done(null, false); }
+            function() { done(null, false); }
         );
     }
 ));
+
+// auth: login
 app.use(passport.initialize());
 app.use(passport.session());
-app.post('/authenticate', function (req, res, next) {
+app.post('/authenticate', function(req, res) {
     passport.authenticate('local', function(err, user, info) {
-        if (err || ! user) return res.send(401, { retry:true, msg:err.message });
-        req.logIn(user, {}, function (err) { res.send(err? 401: 200, { retry:true, msg:err }) });
+        if (err || ! user)
+            return res.send(401, { retry:true, msg:err.message });
+        req.logIn(user, {}, function (err) {
+            if (err) {
+                return res.send(401, {
+                    retry:true,
+                    err:err,
+                    info:info
+                });
+            }
+            res.send(200);
+	    });
     })(req, res);
 });
 
-app.get('/logout', function(req, res, next) {
+// auth: logout
+app.get('/logout', function(req, res) {
     req.session.destroy(res.json);
+    app.emit('session.destroy');
+    res.send(200);
 });
 
-// a list of default routes can always be requested
-app.all('/routes', function(req, res, next) {
+// routes: default providers
+app.all('/routes', function(req, res) {
     res.sendfile('./routes.json');
 });
 
-// install base router - this will traverse and install children
-var router = new Router(app);
-router.name = '';
-router.path += '/routes';
-router.fullpath = router.path+'/'+router.name;
-router.registerChildren();
+// root Router
+var root = new Router({
+    path: __dirname + '/routes',
+    app: app
+});
+
+// router: install
+app.all('/routes/*', function(req,res) {
+    // parse uri segments
+    req.igaroRouter = {
+        uri: {
+            orig:req.url.match('^[^?]*')[0].split('/'),
+            at:0
+        }
+    };
+    root.exec(app,req,res).catch(function (e) {
+        console.error(e);
+        res.send(500);
+    });
+});
 
 // static files (routes can secure paths)
 app.use(express.static(__dirname + '/serve'));
 
 // unrecognised request
-app.use(function(req, res) { res.send(400) });
-
-var server = app.listen(config.service.port || 80, function() {
-    console.log('Listening on port %d', server.address().port);
+app.use(function(req, res) {
+    res.send(400);
 });
 
-module.exports = { app: app };
+// start server
+var server = app.listen(config.get('service').port || 80, function() {
+    console.info('APP: Listening on port %d', server.address().port);
+});
+
+module.exports = { app:app };

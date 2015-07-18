@@ -1,39 +1,19 @@
-var Router = require("../lib/Router.js");
-var Serve = require("../lib/Serve.js");
+"use strict";
 
-module.exports = function(app) {
+var Router = require("../libs/Router.js");
+var router = new Router({ path:__dirname });
 
-	var router = new Router(app);
-	var serve = new Serve(app);
+module.exports = function(app,req,res) {
 
-	var self = this;
+    var arg = arguments;
 
-	this.meta = function() {
-		return {
-			hasAccess : self.hasAccess(),
-			awareOnNoAccess : true,
-			children : router.getChildren()
-		};
-	};
+    return Promise.resolve().then(function() {
 
-	this.hasAccess = function() {
-		return true;
-	};
+        return res.json({ allgood:true });
 
-	// secure
-	router.append('all', '', function(req, res, next) {
-		if (self.hasAccess()) return next();
-	});
-	
-	router.append('all', '', function(req, res, next) {
-		res.json(self.meta());
-	});
+        return router.exec.apply(arg);
 
-	serve.secure('', function(req, res, next) {
-		if (self.hasAccess()) return next();
-	});
-
-	router.registerChildren();
+    });
 
 };
 

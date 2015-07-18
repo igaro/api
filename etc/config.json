@@ -1,11 +1,11 @@
 {
 
-    "cms_db" : {
+    "db" : {
         "host" : "localhost",
         "port" : "3306",
-        "user" : "root",
-        "password": "",
-        "database": "cmsinit"
+        "user" : "igaroapi",
+        "password": "password",
+        "database": "igaroapi"
     },
 
     "memcached": {
@@ -13,19 +13,12 @@
     },
 
     "session" : {
-    	"timeout" : 3600000
+    	"timeout" : 3600000,
+        "secret" : "dfg47%ds2@"
     },
 
     "service" : {
     	"port" : 3003
-    },
-
-  "mongodb": {
-    "user" : "superuser",
-    "password" : "12345678",
-    "host": "localhost",
-    "port": 27017,
-    "db": ["users"]
-  }
+    }
 
 }

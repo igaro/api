@@ -1,17 +1,15 @@
 {
-  "name": "bmd-cms-app",
+  "name": "igaro_api",
   "version": "0.0.1",
-  "description": "Blackmagic Design CMS Application",
+  "description": "Igaro API Application",
   "author": {
-    "name": "Blackmagic Design",
-    "email": "bmd-web@blackmagicdesign.com",
-    "url": "http://www.blackmagicdesign.com"
+    "name": "Andrew Charnley",
+    "email": "ac@igaro.com",
+    "url": "http://api.igaro.com"
   },
-
   "engines": {
     "node": ">=0.10.20"
   },
-
   "dependencies": {
     "body-parser": "^1.3.0",
     "connect-memcached": "~0.1.0",
@@ -21,11 +19,10 @@
     "express-resource": "^1.0.0",
     "express-session": "",
     "memcached": "0.2.x",
+    "mongodb": "",
+    "mysql": "^2.8.0",
     "node-uuid": "",
     "passport": "~0.2.0",
-    "passport-local": "~1.0.0",
-    "mongojs" : "",
-    "es6-promise" : ""
+    "passport-local": "~1.0.0"
   }
-
 }
