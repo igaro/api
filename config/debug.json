@@ -1,0 +1,26 @@
+{
+
+    "mode" : "debug",
+
+    "db" : {
+        "host" : "localhost",
+        "port" : "3306",
+        "user" : "igaroapi",
+        "password": "password",
+        "database": "igaroapi"
+    },
+
+    "memcached": {
+        "hosts" : "localhost:11211"
+    },
+
+    "session" : {
+    	"timeout" : 3600000,
+        "secret" : "dfg47%ds2@"
+    },
+
+    "service" : {
+    	"port" : 2006
+    }
+
+}

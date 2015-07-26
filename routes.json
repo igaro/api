@@ -1,7 +1,0 @@
-{
-    "routes" : [
-        "header",
-        "main",
-        "footer"
-    ]
-}

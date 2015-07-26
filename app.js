@@ -15,8 +15,9 @@ var app             = express();
 
 // app requires
 var config          = require("./lib/config.js");
-var Router          = require("./lib/Router.js");
+var Route           = require("./lib/Route.js");
 var users           = require("./lib/users.js");
+var init            = require("./config/conf.app.js");
 
 // use cookies
 app.use(cookieParser());
@@ -46,22 +47,32 @@ passport.use(new passport_local.Strategy(
     }
 ));
 
+// cors
+app.all('*', function(req, res, next) {
+    res.header("Access-Control-Allow-Origin", "*");
+    if (req.method === 'OPTIONS') {
+        res.send(200);
+    } else {
+        next();
+    }
+});
+
 // auth: login
 app.use(passport.initialize());
 app.use(passport.session());
 app.post('/authenticate', function(req, res) {
     passport.authenticate('local', function(err, user, info) {
         if (err || ! user)
-            return res.send(401, { retry:true, msg:err.message });
+            return res.sendStatus(401, { retry:true, msg:err.message });
         req.logIn(user, {}, function (err) {
             if (err) {
-                return res.send(401, {
+                return res.sendStatus(401, {
                     retry:true,
                     err:err,
                     info:info
                 });
             }
-            res.send(200);
+            res.sendStatus(200);
 	    });
     })(req, res);
 });
@@ -70,41 +81,42 @@ app.post('/authenticate', function(req, res) {
 app.get('/logout', function(req, res) {
     req.session.destroy(res.json);
     app.emit('session.destroy');
-    res.send(200);
+    res.sendStatus(200);
 });
 
-// routes: default providers
-app.all('/routes', function(req, res) {
-    res.sendfile('./routes.json');
+// init: config
+app.all('/init', function(req, res) {
+    init(req,res).catch(function(e) {
+        console.error(e);
+        res.sendStatus(typeof e === 'number'? e : 500);
+    });
 });
 
 // root Router
-var root = new Router({
-    path: __dirname + '/routes',
-    app: app
-});
+var root = new Route();
 
 // router: install
 app.all('/routes/*', function(req,res) {
     // parse uri segments
-    req.igaroRouter = {
-        uri: {
-            orig:req.url.match('^[^?]*')[0].split('/'),
-            at:0
-        }
+    req.uri = {
+        parts:req.url.match('^[^?]*')[0].split('/').slice(2),
+        at:0
     };
     root.exec(app,req,res).catch(function (e) {
         console.error(e);
-        res.send(500);
+        res.sendStatus(typeof e === 'number'? e : 500);
     });
 });
 
-// static files (routes can secure paths)
-app.use(express.static(__dirname + '/serve'));
+// static files (secured by routes)
+app.use(express.static(__dirname + '/protected'));
+
+// static files (unsecured)
+app.use(express.static(__dirname + '/public'));
 
 // unrecognised request
 app.use(function(req, res) {
-    res.send(400);
+    res.sendStatus(400);
 });
 
 // start server

@@ -1,8 +1,0 @@
-use admin
-db.createUser(
-    {
-      user: "superuser",
-      pwd: "12345678",
-      roles: [ "root" ]
-    }
-)
