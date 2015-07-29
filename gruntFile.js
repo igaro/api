@@ -1,3 +1,5 @@
+"use strict";
+
 module.exports = function(grunt) {
 
     var _ = grunt.util._;
@@ -6,14 +8,12 @@ module.exports = function(grunt) {
     var dir = __dirname;
     var buildDirs  = ['build/debug','build/deploy'];
 
-    var nodePids = [];
-
     var config = {
         pkg: grunt.file.readJSON('package.json'),
 
         watch : {
             changes: {
-                files: ['app.js','sass/**/*','compile/**/*','copy/**/*','translations/*.po'],
+                files: ['app.js','sass/**/*','etc/**/*', 'lib/**/*', 'var/**/*', 'compile/**/*','copy/**/*','translations/*.po'],
                 tasks: ['build']
             }
         },
@@ -149,7 +149,7 @@ module.exports = function(grunt) {
             a[b] = {
                 script: 'app.js',
                 options: {
-                    args: [dir+"/config/"+b+".json"],
+                    args: [dir+"/etc/"+b+".json"],
                     nodeArgs: ['--debug='+(7010+i)],
                     cwd: __dirname,
                     watch: ['.built']

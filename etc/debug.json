@@ -2,6 +2,12 @@
 
     "mode" : "debug",
 
+    "cors" : {
+        "headers" : {
+            "Access-Control-Allow-Origin" : "*"
+        }
+    },
+
     "db" : {
         "host" : "localhost",
         "port" : "3306",

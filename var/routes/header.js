@@ -1,10 +1,10 @@
-"use strict";
-
-var Route = require("../lib/Route.js");
+var Route = require("../../lib/Route.js");
 var filename = __filename.split('/').slice(-1)[0];
 var route = new Route(filename);
 
 module.exports = function(app,req,res) {
+
+    "use strict";
 
     return Promise.resolve().then(function() {
 

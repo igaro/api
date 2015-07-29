@@ -2,126 +2,13 @@
 
 "use strict";
 
-// core requires
-var express         = require('express');
-var session         = require("express-session");
-var memcached       = require("connect-memcached");
-var cookieParser    = require("cookie-parser");
-var passport        = require("passport");
-var passport_local  = require("passport-local");
-
-// app variables
-var app             = express();
-
-// app requires
-var config          = require("./lib/config.js");
-var Route           = require("./lib/Route.js");
-var users           = require("./lib/users.js");
-var init            = require("./config/conf.app.js");
-
-// use cookies
-app.use(cookieParser());
-
-// memcache for sessions
-var sessionCfg = config.get('session');
-app.use(session({
-    secret: sessionCfg.secret,
-    store: new memcached(session)({
-        client: config.get('memcached'),
-        prefix: "session."
-    }),
-    cookie: { maxAge: sessionCfg.timeout },
-    rolling: true,
-    resave : false,
-    saveUninitialized: true
-}));
-
-// auth: json web token mechanism
-passport.use(new passport_local.Strategy(
-    { passReqToCallback: true },
-    function(req, username, password, done) {
-        users.getByUID(username).then(
-            function(user) { done(null, user.validate(password)? user : false); },
-            function() { done(null, false); }
-        );
-    }
-));
-
-// cors
-app.all('*', function(req, res, next) {
-    res.header("Access-Control-Allow-Origin", "*");
-    if (req.method === 'OPTIONS') {
-        res.send(200);
-    } else {
-        next();
-    }
+// handle uncaught exceptions
+process.on('uncaughtException', function(e) {
+    console.error(e);
 });
 
-// auth: login
-app.use(passport.initialize());
-app.use(passport.session());
-app.post('/authenticate', function(req, res) {
-    passport.authenticate('local', function(err, user, info) {
-        if (err || ! user)
-            return res.sendStatus(401, { retry:true, msg:err.message });
-        req.logIn(user, {}, function (err) {
-            if (err) {
-                return res.sendStatus(401, {
-                    retry:true,
-                    err:err,
-                    info:info
-                });
-            }
-            res.sendStatus(200);
-	    });
-    })(req, res);
-});
+// express app
+var app             = require('express')();
 
-// auth: logout
-app.get('/logout', function(req, res) {
-    req.session.destroy(res.json);
-    app.emit('session.destroy');
-    res.sendStatus(200);
-});
-
-// init: config
-app.all('/init', function(req, res) {
-    init(req,res).catch(function(e) {
-        console.error(e);
-        res.sendStatus(typeof e === 'number'? e : 500);
-    });
-});
-
-// root Router
-var root = new Route();
-
-// router: install
-app.all('/routes/*', function(req,res) {
-    // parse uri segments
-    req.uri = {
-        parts:req.url.match('^[^?]*')[0].split('/').slice(2),
-        at:0
-    };
-    root.exec(app,req,res).catch(function (e) {
-        console.error(e);
-        res.sendStatus(typeof e === 'number'? e : 500);
-    });
-});
-
-// static files (secured by routes)
-app.use(express.static(__dirname + '/protected'));
-
-// static files (unsecured)
-app.use(express.static(__dirname + '/public'));
-
-// unrecognised request
-app.use(function(req, res) {
-    res.sendStatus(400);
-});
-
-// start server
-var server = app.listen(config.get('service').port || 80, function() {
-    console.info('APP: Listening on port %d', server.address().port);
-});
-
-module.exports = { app:app };
+// plugins
+require("./lib/plugins.js")(app, __dirname + '/lib/plugins');
