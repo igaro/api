@@ -13,7 +13,11 @@
         "port" : "3306",
         "user" : "igaroapi",
         "password": "password",
-        "database": "igaroapi"
+        "database": "igaroapi",
+        "connections" : {
+            "max" : 20,
+            "warn" : true
+        } 
     },
 
     "memcached": {

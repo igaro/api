@@ -10,7 +10,6 @@ node_modules
 tests/reports/
 tests/output/
 bin/
-lib/
 npm-debug.log
 .DS_Store
 .sass-cache
