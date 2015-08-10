@@ -17,11 +17,15 @@
         "connections" : {
             "max" : 20,
             "warn" : true
-        } 
+        }
     },
 
     "memcached": {
         "hosts" : "localhost:11211"
+    },
+
+    "user" : {
+        "salt" : "43F77DFJW"
     },
 
     "session" : {
